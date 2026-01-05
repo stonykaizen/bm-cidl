@@ -17,11 +17,61 @@ export const TGP_DATA: TGPBenchmarkData[] = [
   { id: 13, name: '13', baselineEnergy: 0.05, tgpEnergy: 0.03, baselineSpeed: 16.6, tgpSpeed: 14.6, baselineVolume: 750, tgpVolume: 3180, baselineQuality: 9.6, tgpQuality: 10.5 }
 ];
 
-export const SYSTEM_IMAGE_URL = "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2070";
+export const MEMORY_STRESS_DATA = Array.from({ length: 51 }, (_, i) => {
+  const tokens = i * 2000;
+  const baseline = tokens <= 18000 ? 6.2 + (tokens / 18000) * 5.8 : null;
+  const cycle = (tokens % 5000) / 5000;
+  const tgp = 6.8 + (cycle * 1.4);
+  return { tokens, baseline, tgp };
+});
+
+export const HIGH_DENSITY_DATA = Array.from({ length: 241 }, (_, i) => {
+  const t = i;
+  const plateauBase = 2860; // Ligero desfase hacia arriba
+  const plateauTGP = 2840;  // Ligero desfase hacia abajo
+  const floor = 850;
+  const peaks = [8, 22, 38, 53, 70, 103, 168, 233];
+  
+  // Lógica Baseline (Roja)
+  let baseline = null;
+  if (t < 55) {
+    if (peaks.slice(0, 4).some(p => Math.abs(t - p) < 1.0)) {
+      baseline = 4300 + (Math.sin(t) * 50);
+    } else if (t < 5) {
+      baseline = floor + (t * 400); 
+    } else {
+      baseline = plateauBase + (Math.sin(t * 0.8) * 15); // Oscilación mínima diferenciada
+    }
+  } else if (t < 58) {
+    // Transición de colapso rápida pero visible
+    baseline = plateauBase - ((t - 55) * 670);
+  } else {
+    baseline = floor + (Math.random() * 10); // Crash
+  }
+
+  // Lógica TGP (Verde)
+  let tgp = plateauTGP;
+  const isPeak = peaks.some(p => Math.abs(t - p) < 1.2);
+  const isDrop = peaks.some(p => t > p && t < p + 3);
+
+  if (isPeak) {
+    tgp = 4450 + (Math.cos(t) * 60);
+  } else if (isDrop) {
+    tgp = floor + (Math.random() * 80);
+  } else if (t < 5) {
+    tgp = floor + (t * 300);
+  } else {
+    tgp = plateauTGP + (Math.cos(t * 0.5) * 20); // Oscilación más lenta para distinguir de baseline
+  }
+
+  return { time: t, baseline, tgp };
+});
+
+export const SYSTEM_IMAGE_URL = "https://img.v0.dev/api/image/v1/592397c8-8835-4309-848e-018693899f80?prompt=laptop+running+ai+monitoring+software+on+a+circuits+table&seed=42";
 
 export const COLORS = {
-  baseline: '#2563eb', // Azul
-  tgp: '#16a34a',      // Verde
+  baseline: '#b91c1c',
+  tgp: '#15803d',
   background: '#050505',
   cardBorder: '#1f2937'
 };
